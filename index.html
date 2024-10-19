@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File to ASCII Converter</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: linear-gradient(135deg, #f39c12, #8e44ad);
+      color: #fff;
+      text-align: center;
+    }
+    #container {
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+      padding: 30px;
+      max-width: 600px;
+    }
+    h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+      color: #e74c3c;
+    }
+    #drop-area {
+      border: 4px dashed #e74c3c;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      transition: background 0.3s ease;
+      margin-bottom: 20px;
+    }
+    #drop-area.highlight {
+      background-color: #f39c12;
+      color: #fff;
+    }
+    #drop-area h3 {
+      font-size: 1.5em;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 5px;
+      text-transform: uppercase;
+      margin-top: 10px;
+      transition: background 0.3s ease;
+    }
+    .button:hover {
+      background-color: #c0392b;
+    }
+    img {
+      width: 100px;
+      margin-top: 20px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>Convert Your Files to ASCII!</h1>
+    <div id="drop-area">
+      <h3>Drag & Drop your file(s) here</h3>
+      <p>or</p>
+      <button class="button" onclick="document.getElementById('fileElem').click()">Select File(s)</button>
+      <input type="file" id="fileElem" multiple accept=".txt,.svg" onchange="handleFiles(this.files)">
+    </div>
+  </div>
+
+  <script>
+    let dropArea = document.getElementById('drop-area');
+
+    // Prevent default behaviors for drag & drop events
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false)
+    });
+
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    // Highlight when file is dragged over the drop area
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+    });
+
+    // Handle file drop
+    dropArea.addEventListener('drop', (e) => {
+      let dt = e.dataTransfer;
+      let files = dt.files;
+      handleFiles(files);
+    });
+
+    // Handle multiple files
+    function handleFiles(files) {
+      [...files].forEach(file => processFile(file));
+    }
+
+    // Process each file
+    function processFile(file) {
+      const validTypes = ['text/plain', 'image/svg+xml'];
+      if (validTypes.includes(file.type)) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target.result;
+          const asciiValues = text.split('').map(char => char.charCodeAt(0)).join(' '); // Convert to ASCII values
+          downloadFile(file.name, asciiValues, file.type); // Download the new file
+        };
+        reader.readAsText(file);
+      } else {
+        alert('Only .txt and .svg files are supported!');
+      }
+    }
+
+    // Download the file with ASCII values
+    function downloadFile(originalFileName, content, fileType) {
+      let newFileName;
+      if (fileType === 'image/svg+xml') {
+        newFileName = originalFileName + '.txt'; // Add .txt to the .svg file
+      } else {
+        newFileName = originalFileName.replace(/(\.\w+)?$/, '_copy.txt'); // Add _copy for .txt files
+      }
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = newFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
